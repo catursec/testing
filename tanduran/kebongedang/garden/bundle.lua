@@ -83,7 +83,7 @@ return function(ctx)
 		local GuiService = game:GetService("GuiService")
 		local TeleportService = game:GetService("TeleportService")
 		local branch = (getgenv and getgenv().GAG_BRANCH) or _G.GAG_BRANCH or "main"
-		local RECON = ("if getgenv then getgenv().GAG_BRANCH=%q end;loadstring(game:HttpGet('https://raw.githubusercontent.com/catursec/tanduran/%s/kebongedang/init.lua'))()"):format(branch, branch)
+		local RECON = ("if getgenv then getgenv().GAG_BRANCH=%q end;loadstring(game:HttpGet('https://raw.githubusercontent.com/catursec/testing/tanduran/%s/kebongedang/init.lua'))()"):format(branch, branch)
 		local reconnecting = false
 		local function reconnect()
 			if reconnecting or CFG.autoReconnect == false then return end -- cek toggle real-time
@@ -983,7 +983,7 @@ local function sendWebhook(url, payload, ctx)
 	-- Nama & avatar pengirim webhook (override default). Semua notif tampil "CeszParadiseHub".
 	if type(payload) == "table" then
 		if not payload.username then payload.username = "CeszParadise" end
-		if not payload.avatar_url then payload.avatar_url = "https://raw.githubusercontent.com/catursec/tanduran/main/kebongedang/Logo/logo_icon.png" end
+		if not payload.avatar_url then payload.avatar_url = "https://raw.githubusercontent.com/catursec/testing/tanduran/main/kebongedang/Logo/logo_icon.png" end
 	end
 	
 	-- Gunakan proxy jika menggunakan HttpService standard karena Discord memblokir Roblox UA
@@ -1735,7 +1735,7 @@ local HttpService = game:GetService("HttpService")
 local elephantWebhook = {}
 
 local USERNAME = "CeszParadise"
-local AVATAR = "https://raw.githubusercontent.com/catursec/tanduran/main/kebongedang/Logo/logo_icon.png"
+local AVATAR = "https://raw.githubusercontent.com/catursec/testing/tanduran/main/kebongedang/Logo/logo_icon.png"
 
 local function bracketLabel(w)
 	local lo = math.floor(w * 10) / 10
@@ -1828,7 +1828,7 @@ local function buildPayload(ctx)
 				title = "\240\159\147\138 Growth \226\128\162 Elephant Statistics",
 				color = 3066993,
 				description = desc,
-				footer = { text = os.date("%B %d | %I:%M %p"), icon_url = "https://raw.githubusercontent.com/catursec/tanduran/main/kebongedang/Logo/logo_icon.png" },
+				footer = { text = os.date("%B %d | %I:%M %p"), icon_url = "https://raw.githubusercontent.com/catursec/testing/tanduran/main/kebongedang/Logo/logo_icon.png" },
 			}
 		}
 	}
@@ -1958,7 +1958,7 @@ function elephantWebhook.sendFinished(ctx, petType, weight, mutation, age, durat
 				},
 				footer = {
 					text = os.date("%B %d | %I:%M %p"),
-					icon_url = "https://raw.githubusercontent.com/catursec/tanduran/main/kebongedang/Logo/logo_icon.png"
+					icon_url = "https://raw.githubusercontent.com/catursec/testing/tanduran/main/kebongedang/Logo/logo_icon.png"
 				}
 			}
 		}
@@ -4979,7 +4979,7 @@ return function(ctx)
 				},
 				footer = {
 					text = ("Server Version: %s\n%s"):format(tostring(game.PlaceVersion), os.date("%B %d | %I:%M %p")),
-					icon_url = "https://raw.githubusercontent.com/catursec/tanduran/main/kebongedang/Logo/logo_icon.png",
+					icon_url = "https://raw.githubusercontent.com/catursec/testing/tanduran/main/kebongedang/Logo/logo_icon.png",
 				},
 			} },
 		}
@@ -5009,7 +5009,7 @@ return function(ctx)
 				},
 				footer = {
 					text = ("Server Version: %s\n%s"):format(tostring(game.PlaceVersion), os.date("%B %d | %I:%M %p")),
-					icon_url = "https://raw.githubusercontent.com/catursec/tanduran/main/kebongedang/Logo/logo_icon.png",
+					icon_url = "https://raw.githubusercontent.com/catursec/testing/tanduran/main/kebongedang/Logo/logo_icon.png",
 				},
 			} },
 		}
@@ -5062,7 +5062,7 @@ return function(ctx)
 				},
 				footer = {
 					text = ("Server Version: %s\n%s"):format(tostring(game.PlaceVersion), os.date("%B %d | %I:%M %p")),
-					icon_url = "https://raw.githubusercontent.com/catursec/tanduran/main/kebongedang/Logo/logo_icon.png",
+					icon_url = "https://raw.githubusercontent.com/catursec/testing/tanduran/main/kebongedang/Logo/logo_icon.png",
 				},
 			} },
 		}
@@ -5141,7 +5141,7 @@ return function(ctx)
 			if q then
 				local branch = (getgenv and getgenv().GAG_BRANCH) or _G.GAG_BRANCH or "main"
 				pcall(function()
-					q(('if getgenv then getgenv().GAG_BRANCH=%q end loadstring(game:HttpGet("https://raw.githubusercontent.com/catursec/tanduran/%s/kebongedang/init.lua"))()'):format(branch, branch))
+					q(('if getgenv then getgenv().GAG_BRANCH=%q end loadstring(game:HttpGet("https://raw.githubusercontent.com/catursec/testing/tanduran/%s/kebongedang/init.lua"))()'):format(branch, branch))
 				end)
 			end
 			task.wait(0.4)
@@ -5356,7 +5356,7 @@ return function(ctx)
 			},
 			footer = {
 				text = ("Server Version: %s\n%s"):format(tostring(game.PlaceVersion), os.date("%B %d | %I:%M %p")),
-				icon_url = "https://raw.githubusercontent.com/catursec/tanduran/main/kebongedang/Logo/logo_icon.png"
+				icon_url = "https://raw.githubusercontent.com/catursec/testing/tanduran/main/kebongedang/Logo/logo_icon.png"
 			},
 		} } }
 		pcall(function() ctx.sendWebhook(url, payload, ctx) end)
@@ -6858,7 +6858,7 @@ function levelingWebhook.sendEnabled(ctx, queueList, teamList, targetAge)
 				},
 				footer = {
 					text = os.date("%B %d | %I:%M %p"),
-					icon_url = "https://raw.githubusercontent.com/catursec/tanduran/main/kebongedang/Logo/logo_icon.png"
+					icon_url = "https://raw.githubusercontent.com/catursec/testing/tanduran/main/kebongedang/Logo/logo_icon.png"
 				}
 			}
 		}
@@ -6904,7 +6904,7 @@ function levelingWebhook.sendFinished(ctx, petType, mutation, age, durationSec, 
 				},
 				footer = {
 					text = os.date("%B %d | %I:%M %p"),
-					icon_url = "https://raw.githubusercontent.com/catursec/tanduran/main/kebongedang/Logo/logo_icon.png"
+					icon_url = "https://raw.githubusercontent.com/catursec/testing/tanduran/main/kebongedang/Logo/logo_icon.png"
 				}
 			}
 		}
@@ -6933,7 +6933,7 @@ return function(ctx)
 		local q = (syn and syn.queue_on_teleport) or queue_on_teleport
 			or (fluxus and fluxus.queue_on_teleport) or (getgenv and getgenv().queue_on_teleport)
 		if q then
-			local cmd = ('if getgenv then getgenv().GAG_BRANCH=%q end loadstring(game:HttpGet("https://raw.githubusercontent.com/catursec/tanduran/%s/kebongedang/init.lua"))()'):format(branch, branch)
+			local cmd = ('if getgenv then getgenv().GAG_BRANCH=%q end loadstring(game:HttpGet("https://raw.githubusercontent.com/catursec/testing/tanduran/%s/kebongedang/init.lua"))()'):format(branch, branch)
 			pcall(function() q(cmd) end)
 		end
 	end
@@ -8349,7 +8349,7 @@ function cleanseWebhook.sendObtained(ctx, petType, mutation, age, remainsQueue)
 				},
 				footer = {
 					text = os.date("%B %d | %I:%M %p"),
-					icon_url = "https://raw.githubusercontent.com/catursec/tanduran/main/kebongedang/Logo/logo_icon.png",
+					icon_url = "https://raw.githubusercontent.com/catursec/testing/tanduran/main/kebongedang/Logo/logo_icon.png",
 				},
 			},
 		},
@@ -8421,7 +8421,7 @@ function mutationWebhook.sendEnabled(ctx, targetTypes, targetMuts, targetAge, ex
 				},
 				footer = {
 					text = os.date("%B %d | %I:%M %p"),
-					icon_url = "https://raw.githubusercontent.com/catursec/tanduran/main/kebongedang/Logo/logo_icon.png"
+					icon_url = "https://raw.githubusercontent.com/catursec/testing/tanduran/main/kebongedang/Logo/logo_icon.png"
 				}
 			}
 		}
@@ -8459,7 +8459,7 @@ function mutationWebhook.sendSubmitted(ctx, petType, level)
 				},
 				footer = {
 					text = os.date("%B %d | %I:%M %p"),
-					icon_url = "https://raw.githubusercontent.com/catursec/tanduran/main/kebongedang/Logo/logo_icon.png"
+					icon_url = "https://raw.githubusercontent.com/catursec/testing/tanduran/main/kebongedang/Logo/logo_icon.png"
 				}
 			}
 		}
@@ -8510,7 +8510,7 @@ function mutationWebhook.sendClaimed(ctx, petType, outcomeMutation, isMatched, d
 				},
 				footer = {
 					text = os.date("%B %d | %I:%M %p"),
-					icon_url = "https://raw.githubusercontent.com/catursec/tanduran/main/kebongedang/Logo/logo_icon.png"
+					icon_url = "https://raw.githubusercontent.com/catursec/testing/tanduran/main/kebongedang/Logo/logo_icon.png"
 				}
 			}
 		}
@@ -12089,7 +12089,7 @@ return function(ctx)
 									},
 									footer = {
 										text = os.date("%B %d | %I:%M %p"),
-										icon_url = "https://raw.githubusercontent.com/catursec/tanduran/main/kebongedang/Logo/logo_icon.png"
+										icon_url = "https://raw.githubusercontent.com/catursec/testing/tanduran/main/kebongedang/Logo/logo_icon.png"
 									}
 								}
 							}
