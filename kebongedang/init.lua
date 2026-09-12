@@ -1,7 +1,7 @@
 --[[
 	GAG Hub — Router
 	Satu entry point untuk dua server berbeda. Jalankan:
-		loadstring(game:HttpGet("https://raw.githubusercontent.com/catursec/tanduran//main/GAGSeller/init.lua"))()
+		loadstring(game:HttpGet("https://raw.githubusercontent.com/catursec/testing//main/GAGSeller/init.lua"))()
 
 	Router mendeteksi PlaceId lalu memuat app yang sesuai:
 	  - Trade World  -> GAGSeller/trade/init.lua   (fitur seller sekarang)
@@ -10,7 +10,7 @@
 
 -- Branch: "main" = production. Override buat dev: getgenv().GAG_BRANCH = "dev"
 local branch = (getgenv and getgenv().GAG_BRANCH) or _G.GAG_BRANCH or "main"
-local ROOT = "https://raw.githubusercontent.com/catursec/tanduran/" .. branch .. "/kebongedang"
+local ROOT = "https://raw.githubusercontent.com/catursec/testing/" .. branch .. "/kebongedang"
 
 -- PlaceId server Trade World.
 local TRADE_WORLD_PLACE = 129954712878723
