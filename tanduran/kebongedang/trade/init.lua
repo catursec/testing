@@ -18,7 +18,7 @@
 -- Base URL raw GitHub tempat semua modul berada. Branch bisa di-override buat dev:
 --   getgenv().GAG_BRANCH = "dev"  (default "main" = production)
 local branch = (getgenv and getgenv().GAG_BRANCH) or _G.GAG_BRANCH or "main"
-local BASE = "https://raw.githubusercontent.com/catursec/tanduran/" .. branch .. "/kebongedang/trade"
+local BASE = "https://raw.githubusercontent.com/catursec/testing/tanduran/" .. branch .. "/kebongedang/trade"
 
 --------------------------------------------------------------------- loader
 -- Selalu load dari bundle.lua (1 HttpGet, kilat). Workflow: edit modul ->
@@ -103,7 +103,7 @@ function ctx.getLogo()
 		local path = "CeszParadiseHUB/logo_icon.png"
 		if not (isfile and isfile(path)) then
 			if makefolder and not (isfolder and isfolder("CeszParadiseHUB")) then makefolder("CeszParadiseHUB") end
-			writefile(path, game:HttpGet("https://raw.githubusercontent.com/catursec/tanduran/" .. branch .. "/kebongedang/Logo/logo_icon.png"))
+			writefile(path, game:HttpGet("https://raw.githubusercontent.com/catursec/testing/tanduran/" .. branch .. "/kebongedang/Logo/logo_icon.png"))
 		end
 		asset = gca(path) or false
 	end)
