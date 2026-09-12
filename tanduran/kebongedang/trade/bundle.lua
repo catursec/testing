@@ -46,7 +46,7 @@ return function(ctx)
 		local GuiService = game:GetService("GuiService")
 		local TeleportService = game:GetService("TeleportService")
 		local branch = (getgenv and getgenv().GAG_BRANCH) or "main"
-		local RECON = ("getgenv().GAG_BRANCH='%s';loadstring(game:HttpGet('https://raw.githubusercontent.com/catursec/tanduran/%s/kebongedang/init.lua'))()"):format(branch, branch)
+		local RECON = ("getgenv().GAG_BRANCH='%s';loadstring(game:HttpGet('https://raw.githubusercontent.com/catursec/testing/tanduran/%s/kebongedang/init.lua'))()"):format(branch, branch)
 		local reconnecting = false
 		local function reconnect()
 			if reconnecting or CFG.autoReconnect == false then return end -- cek toggle real-time
@@ -138,7 +138,7 @@ return function(ctx)
 	-- di-destroy langsung berhenti -> ga ada dobel sniper.
 	local function running() return ctx.state.snipeRunning == true and ctx.alive() end
 
-	local ROUTER = "loadstring(game:HttpGet('https://raw.githubusercontent.com/catursec/tanduran/main/kebongedang/init.lua'))()"
+	local ROUTER = "loadstring(game:HttpGet('https://raw.githubusercontent.com/catursec/testing/tanduran/main/kebongedang/init.lua'))()"
 
 	------------------------------------------------------------------ helpers
 	local function buildItemData(petType)
@@ -937,7 +937,7 @@ return function(ctx)
 		if not CFG.webhookEnabled or CFG.webhookUrl == "" then return end
 		if type(payload) == "table" then
 			if not payload.username then payload.username = "CeszParadise" end
-			if not payload.avatar_url then payload.avatar_url = "https://raw.githubusercontent.com/catursec/tanduran/main/kebongedang/Logo/logo_icon.png" end
+			if not payload.avatar_url then payload.avatar_url = "https://raw.githubusercontent.com/catursec/testing/tanduran/main/kebongedang/Logo/logo_icon.png" end
 		end
 		task.spawn(function()
 			local reqFn = (syn and syn.request) or (http and http.request) or http_request or request
@@ -1077,13 +1077,13 @@ return function(ctx)
 				},
 				footer = {
 					text = ("CeszParadise Trade • %s"):format(os.date("%B %d | %I:%M %p")),
-					icon_url = "https://raw.githubusercontent.com/catursec/tanduran/main/kebongedang/Logo/logo_icon.png"
+					icon_url = "https://raw.githubusercontent.com/catursec/testing/tanduran/main/kebongedang/Logo/logo_icon.png"
 				}
 			}
 
 			sendWebhook({
 				username = "CeszParadise",
-				avatar_url = "https://raw.githubusercontent.com/catursec/tanduran/main/kebongedang/Logo/logo_icon.png",
+				avatar_url = "https://raw.githubusercontent.com/catursec/testing/tanduran/main/kebongedang/Logo/logo_icon.png",
 				embeds = { embed }
 			})
 
@@ -1919,7 +1919,7 @@ return function(ctx)
 	local function log(m) ctx.log(m) end
 	local function setStatus(s) ctx.setStatus(s) end
 
-	local ROUTER = "loadstring(game:HttpGet('https://raw.githubusercontent.com/catursec/tanduran/main/kebongedang/init.lua'))()"
+	local ROUTER = "loadstring(game:HttpGet('https://raw.githubusercontent.com/catursec/testing/tanduran/main/kebongedang/init.lua'))()"
 
 	-- waktu jual terakhir; reset tiap ada yang beli dari kita -> penanda booth aktif.
 	ctx.state.lastSaleAt = os.time()
@@ -3128,14 +3128,14 @@ return function(ctx)
 		local prev = CFG.webhookEnabled; CFG.webhookEnabled = true
 		ctx.sendWebhook({
 			username = "CeszParadise",
-			avatar_url = "https://raw.githubusercontent.com/catursec/tanduran/main/kebongedang/Logo/logo_icon.png",
+			avatar_url = "https://raw.githubusercontent.com/catursec/testing/tanduran/main/kebongedang/Logo/logo_icon.png",
 			embeds = {{
 				title = "🔔 Test Sukses",
 				description = "Seller Webhook berhasil terhubung ke CeszParadise!",
 				color = 10181046,
 				footer = {
 					text = "Player: " .. LP.Name,
-					icon_url = "https://raw.githubusercontent.com/catursec/tanduran/main/kebongedang/Logo/logo_icon.png"
+					icon_url = "https://raw.githubusercontent.com/catursec/testing/tanduran/main/kebongedang/Logo/logo_icon.png"
 				}
 			}}
 		})
