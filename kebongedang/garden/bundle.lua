@@ -1,6 +1,6 @@
 -- AUTO-GENERATED oleh tools/bundle.js — JANGAN edit manual.
 -- Edit modul-nya langsung, terus run `node tools/bundle.js`.
--- 43 modul, di-generate 2026-09-12T02:34:30.159Z
+-- 43 modul, di-generate 2026-09-12T03:18:58.515Z
 return {
 	["app.lua"] = [=[
 --[[ app.lua — init akhir garden: default tab Inventory + auto-resume automation. ]]
@@ -305,6 +305,7 @@ return function(ctx)
 		hatchMaxPlaced  = 8,          -- target egg ke-place di garden
 		hatchPlacePattern = "Grid",   -- pola taro egg: "Grid" (rapih) / "Random" (sebar acak)
 		hatchTeamDelay  = 5,          -- detik tunggu abis swap team sebelum hatch
+		autoTeamDelay   = true,       -- otomatis atur delay team berdasarkan prediksi pintar (notif delay)
 		hatchWebhookUrl   = "",       -- webhook Discord buat Hatch Alert (bronto)
 		hatchAlertEnabled = false,    -- kirim alert pas pet masuk filter bronto
 		hatchRejoinMinusEnabled   = false, -- Auto rejoin kalau egg minus
@@ -4501,11 +4502,112 @@ return function(ctx)
 				local l = msg:lower()
 				if l:find("egg has been recovered") then
 					ctx.state.periodHatchRec = (ctx.state.periodHatchRec or 0) + 1
+					onHatchNotif()
 				elseif l:find("egg back from selling") then
 					ctx.state.periodSellRec = (ctx.state.periodSellRec or 0) + 1
+					onSellNotif()
 				end
 			end)
 		end
+	end
+
+	----------------------------------------------------------------- Smart Delay Tracker + Auto Team Delay
+	-- Belajar dari notif nyata: berapa detik server kirim notif Lucky Hatch / Lucky Sell
+	-- setelah FireServer. Rolling average 10 sample → dipakai auto-set hatchTeamDelay & sellTeamDelay,
+	-- serta mengganti task.wait statis setelah hatch/sell dengan nilai adaptif.
+	local DEL = {
+		hatchFires  = {},   -- queue os.clock() tiap FireServer("HatchPet")
+		sellFires   = {},   -- queue os.clock() tiap FireServer Sell
+		hatchDelays = {},   -- sampel delay (detik) hatch→notif Lucky Hatch
+		sellDelays  = {},   -- sampel delay (detik) sell→notif Lucky Sell
+		avgHatch    = nil,  -- rolling avg (nil = belum ada data)
+		avgSell     = nil,
+	}
+	ctx.state.hatchDelayTracker = DEL
+
+	local ROLLING_N = 10
+	-- Hitung rolling average dari N sample terakhir
+	local function rollingAvg(tbl)
+		local n = math.min(#tbl, ROLLING_N)
+		if n == 0 then return nil end
+		local sum = 0
+		for i = #tbl - n + 1, #tbl do sum = sum + tbl[i] end
+		return sum / n
+	end
+
+	-- Waktu tunggu POST-hatch/sell (fallback 1.5 s kalau belum ada data)
+	local function adaptiveWaitHatch()
+		return DEL.avgHatch and math.max(1.0, DEL.avgHatch + 0.5) or 1.5
+	end
+	local function adaptiveWaitSell()
+		return DEL.avgSell and math.max(1.0, DEL.avgSell + 0.5) or 1.5
+	end
+
+	-- Auto Team Delay: set CFG.hatchTeamDelay & sellTeamDelay otomatis dari data belajar.
+	-- Formula: avgDelay adalah waktu server perlu proses passive Koi/Seal.
+	-- hatchTeamDelay = avgHatch + 0.5 (margin), min 2s, max 15s.
+	-- sellTeamDelay  = avgSell  + 0.5 (margin), min 2s, max 15s.
+	local function applyAutoTeamDelay()
+		if not CFG.autoTeamDelay then return end
+		if DEL.avgHatch then
+			local newHD = math.floor(math.clamp(DEL.avgHatch + 0.5, 2, 15) + 0.5)
+			CFG.hatchTeamDelay  = newHD
+			CFG.brontoTeamDelay = newHD   -- bronto pakai delay yg sama
+		end
+		if DEL.avgSell then
+			CFG.sellTeamDelay = math.floor(math.clamp(DEL.avgSell + 0.5, 2, 15) + 0.5)
+		end
+	end
+
+	-- Dipanggil tepat setelah FireServer("HatchPet")
+	local function recordHatchFire()
+		DEL.hatchFires[#DEL.hatchFires + 1] = os.clock()
+	end
+	-- Dipanggil tepat setelah FireServer Sell
+	local function recordSellFire()
+		DEL.sellFires[#DEL.sellFires + 1] = os.clock()
+	end
+	-- Dipanggil saat notif "Lucky Hatch" masuk
+	local function onHatchNotif()
+		local now = os.clock()
+		if #DEL.hatchFires > 0 then
+			local delay = now - table.remove(DEL.hatchFires, 1)
+			if delay > 0 and delay < 30 then
+				DEL.hatchDelays[#DEL.hatchDelays + 1] = delay
+				DEL.avgHatch = rollingAvg(DEL.hatchDelays)
+				applyAutoTeamDelay()   -- langsung update delay setiap dapat sample baru
+			end
+		end
+	end
+	-- Dipanggil saat notif "Lucky Sell" masuk
+	local function onSellNotif()
+		local now = os.clock()
+		if #DEL.sellFires > 0 then
+			local delay = now - table.remove(DEL.sellFires, 1)
+			if delay > 0 and delay < 30 then
+				DEL.sellDelays[#DEL.sellDelays + 1] = delay
+				DEL.avgSell = rollingAvg(DEL.sellDelays)
+				applyAutoTeamDelay()   -- langsung update delay setiap dapat sample baru
+			end
+		end
+	end
+
+	-- Expose info ke UI
+	function ctx.getSmartDelayInfo()
+		local nh = math.min(#DEL.hatchDelays, ROLLING_N)
+		local ns = math.min(#DEL.sellDelays, ROLLING_N)
+		return {
+			avgHatchDelay  = DEL.avgHatch,
+			avgSellDelay   = DEL.avgSell,
+			hatchSamples   = nh,
+			sellSamples    = ns,
+			hatchWait      = adaptiveWaitHatch(),
+			sellWait       = adaptiveWaitSell(),
+			autoTeamDelay  = CFG.autoTeamDelay,
+			curHatchTeamD  = CFG.hatchTeamDelay,
+			curSellTeamD   = CFG.sellTeamDelay,
+			isLearning     = nh < ROLLING_N or ns < ROLLING_N,
+		}
 	end
 
 	----------------------------------------------------------------- util
@@ -4687,6 +4789,7 @@ return function(ctx)
 				return 0
 			end
 			if SellAll then pcall(function() SellAll:FireServer() end) end
+			recordSellFire()
 			ctx.state.hatchSellCycles = (ctx.state.hatchSellCycles or 0) + 1
 			ctx.state.hatchStatus = ("Sold all-at-once (%d matched)"):format(#sells)
 			return #sells
@@ -4697,6 +4800,7 @@ return function(ctx)
 				if t.Parent then
 					setFav(t, false)
 					if SellPet then pcall(function() SellPet:FireServer(t, true) end) end
+					recordSellFire()
 					task.wait(0.1)
 				end
 			end
@@ -5446,8 +5550,10 @@ return function(ctx)
 			ctx.state.hatchReportSellProg = cycle - (ctx.state.hatchLastSellCycle or 0)
 			ctx.state.hatchLastSellCycle = cycle
 
-			-- Tunggu 1.5 detik agar notifikasi Lucky Pet / recovery Seal the Deal masuk ke inventory
-			task.wait(1.5)
+			-- Tunggu adaptif agar notifikasi Lucky Pet / recovery Seal the Deal masuk ke inventory
+			local sw = adaptiveWaitSell()
+			ctx.state.hatchStatus = ("Nunggu Lucky Sell window (%.1fs)..."):format(sw)
+			task.wait(sw)
 
 			-- CEK EGG MINUS SETELAH SIKLUS AUTO SELL SELESAI
 			if CFG.hatchRejoinMinusEnabled then
@@ -5474,7 +5580,9 @@ return function(ctx)
 					ctx.state.periodSold = (ctx.state.periodSold or 0) + (tonumber(sold) or 0)
 					ctx.state.sellDoneThisReport = true
 					curPets, maxPets = getInventoryCapacity()
-					task.wait(1.5)
+					local sw2 = adaptiveWaitSell()
+					ctx.state.hatchStatus = ("Nunggu Lucky Sell window (%.1fs)..."):format(sw2)
+					task.wait(sw2)
 
 					-- Cek egg minus setelah sell darurat
 					if CFG.hatchRejoinMinusEnabled then
@@ -5545,6 +5653,7 @@ return function(ctx)
 					local pt, w = eggPending(e)
 					if pt then trackHatch(pt, w, isBrontoSpecial(pt, w)) end
 					pcall(function() EggRemote:FireServer("HatchPet", e) end)
+					recordHatchFire()
 					ctx.state.hatchEggsHatched = (ctx.state.hatchEggsHatched or 0) + 1
 				end
 			end
@@ -5576,13 +5685,16 @@ return function(ctx)
 					-- pet ini di-hatch pakai Bronto team -> berat aktual +30% (buat tier Hunt)
 					if pt then trackHatch(pt, w * 1.3, isBrontoSpecial(pt, w)); task.spawn(function() sendHatchAlert(pt, CFG.hatchEggName or "Rare Egg", w) end) end
 					pcall(function() EggRemote:FireServer("HatchPet", e) end)
+					recordHatchFire()
 					ctx.state.hatchEggsHatched = (ctx.state.hatchEggsHatched or 0) + 1
 				end
 			end
 			if not CFG.hatchEnabled then return end
 			-- jumlah hatch (recovery-nya diisi listener notif). Beri jeda biar notif nyusul.
 			ctx.state.periodHatched = (ctx.state.periodHatched or 0) + #normal + #bronto
-			task.wait(1.5)
+			local aw = adaptiveWaitHatch()
+			ctx.state.hatchStatus = ("Nunggu Lucky Hatch window (%.1fs)..."):format(aw)
+			task.wait(aw)
 			-- 1 batch (normal+bronto) selesai = 1 ronde/cycle
 			ctx.state.hatchRounds = (ctx.state.hatchRounds or 0) + 1
 			-- TANDAI report pending. Webhook ga dikirim di sini — ditunda sampai garden
@@ -11064,23 +11176,22 @@ return function(ctx)
 						gr, s.eggsHatched, gr, s.cycleProg, s.cycleTarget,
 						gr, (s.proc or {}).koiCount or 0, (s.proc or {}).koiPct or 0,
 						gr, (s.proc or {}).sealCount or 0, (s.proc or {}).sealPct or 0)
-					-- Smart Adaptive Timing section
+					-- Smart Prediction (Auto Delay Team)
 					local di = {}; pcall(function() di = ctx.getSmartDelayInfo() or {} end)
-					local hInfo, sInfo
-					if di.avgHatchDelay then
-						hInfo = string.format("<font color=\"#5acc78\">%.1fs</font> (dari %d data)", di.hatchWait or 1.5, di.hatchSamples or 0)
-					else
-						hInfo = string.format("<font color=\"#f5c82d\">Belajar... %d/10</font>", di.hatchSamples or 0)
-					end
-					if di.avgSellDelay then
-						sInfo = string.format("<font color=\"#5acc78\">%.1fs</font> (dari %d data)", di.sellWait or 1.5, di.sellSamples or 0)
-					else
-						sInfo = string.format("<font color=\"#f5c82d\">Belajar... %d/10</font>", di.sellSamples or 0)
-					end
+					local hDStr = (di.curHatchTeamD and tostring(di.curHatchTeamD) .. "s") or "5s"
+					local sDStr = (di.curSellTeamD and tostring(di.curSellTeamD) .. "s") or "5s"
+					local predStatus = (CFG.autoTeamDelay and "<font color=\"#5acc78\">Auto (Aktif)</font>") or "<font color=\"#dc5050\">Manual</font>"
+					
+					local hLearn = di.avgHatchDelay and string.format("<font color=\"#5acc78\">~%.1fs</font> (%d data)", di.avgHatchDelay, di.hatchSamples or 0)
+						or string.format("<font color=\"#f5c82d\">Belajar... %d/10</font>", di.hatchSamples or 0)
+					local sLearn = di.avgSellDelay and string.format("<font color=\"#5acc78\">~%.1fs</font> (%d data)", di.avgSellDelay, di.sellSamples or 0)
+						or string.format("<font color=\"#f5c82d\">Belajar... %d/10</font>", di.sellSamples or 0)
+
 					hLbl.Text = hLbl.Text ..
-						"\n\n<b>Smart Adaptive Timing</b>\n" ..
-						"⏱ Hatch wait: " .. hInfo .. "\n" ..
-						"💰 Sell wait:  " .. sInfo
+						"\n\n<b>Smart Prediction (Auto Delay)</b>\n" ..
+						"Mode: " .. predStatus .. "\n" ..
+						"⏱ Hatch Team Delay: <font color=\"#5acc78\"><b>" .. hDStr .. "</b></font> (Server: " .. hLearn .. ")\n" ..
+						"💰 Sell Team Delay: <font color=\"#5acc78\"><b>" .. sDStr .. "</b></font> (Server: " .. sLearn .. ")"
 				end
 				task.wait(1.0)
 			end
@@ -11114,19 +11225,21 @@ return function(ctx)
 			function(code) CFG.hatchPlacePattern = code; persist() end, 2)
 		makeInput(hEgg, "Max Placed", "Maksimal egg ke-place di garden",
 			function() return tostring(CFG.hatchMaxPlaced) end, function(t) CFG.hatchMaxPlaced = tonumber(t) or 8; persist() end, 3)
-		makeInput(hEgg, "Hatch Team Delay (sec)", "Tunggu abis swap team sebelum hatch",
+		makeInput(hEgg, "Hatch Team Delay (sec)", "Tunggu abis swap team sebelum hatch (manual jika Smart Delay OFF)",
 			function() return tostring(CFG.hatchTeamDelay or 5) end, function(t) CFG.hatchTeamDelay = tonumber(t) or 5; persist() end, 4)
+		makeToggle(hEgg, "Smart Team Delay (Auto Predict)", "Otomatis atur Hatch & Sell Team Delay berdasarkan prediksi pintar server",
+			function() return CFG.autoTeamDelay end, function(v) CFG.autoTeamDelay = v; persist() end, 5)
 		makeToggle(hEgg, "Auto Rejoin on Egg Minus", "Auto rejoin server jika egg minus mencapai batas",
 			function() return CFG.hatchRejoinMinusEnabled end,
-			function(v) CFG.hatchRejoinMinusEnabled = v; persist() end, 5)
+			function(v) CFG.hatchRejoinMinusEnabled = v; persist() end, 6)
 		makeInput(hEgg, "Egg Minus Threshold", "Batas jumlah minus untuk trigger rejoin (misal: 20)",
 			function() return tostring(CFG.hatchRejoinMinusThreshold or 20) end,
-			function(t) CFG.hatchRejoinMinusThreshold = tonumber(t) or 20; persist() end, 6)
+			function(t) CFG.hatchRejoinMinusThreshold = tonumber(t) or 20; persist() end, 7)
 		makeInput(hEgg, "Hatch Webhook URL", "URL webhook Discord buat notifikasi (opsional, fallback ke Misc)",
 			function() return tostring(CFG.hatchWebhookUrl or "") end,
-			function(t) CFG.hatchWebhookUrl = t; persist() end, 7)
+			function(t) CFG.hatchWebhookUrl = t; persist() end, 8)
 		makeButton(hEgg, "Test Rejoin Webhook", "Kirim contoh notifikasi rejoin ke Discord",
-			function() task.spawn(function() if ctx.testRejoinWebhook then ctx.testRejoinWebhook() end end) end, 8)
+			function() task.spawn(function() if ctx.testRejoinWebhook then ctx.testRejoinWebhook() end end) end, 9)
 
 		-- Bronto Configuration (kapan pakai Bronto team buat +30% berat)
 		local hBr = makeAccordion(hatchPage, "Bronto Configuration", 4, true)
@@ -11167,7 +11280,7 @@ return function(ctx)
 			function() return tostring(CFG.sellEveryNCycles) end, function(t) CFG.sellEveryNCycles = tonumber(t) or 1; persist() end, 8)
 		makeInput(hSell, "Sell When Pets Reach", "Jual kalau backpack pet >= ini",
 			function() return tostring(CFG.sellWhenReach) end, function(t) CFG.sellWhenReach = tonumber(t) or 100; persist() end, 9)
-		makeInput(hSell, "Sell Team Delay (sec)", "Tunggu abis swap team sebelum jual",
+		makeInput(hSell, "Sell Team Delay (sec)", "Tunggu abis swap team sebelum jual (manual jika Smart Delay OFF)",
 			function() return tostring(CFG.sellTeamDelay) end, function(t) CFG.sellTeamDelay = tonumber(t) or 5; persist() end, 10)
 		makeToggle(hSell, "Auto Boost Before Sell", "Boost pet aktif pakai toy sebelum jual",
 			function() return CFG.autoBoostBeforeSell end, function(v) CFG.autoBoostBeforeSell = v; persist() end, 11)
