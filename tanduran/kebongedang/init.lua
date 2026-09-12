@@ -10,7 +10,7 @@
 
 -- Branch: "main" = production. Override buat dev: getgenv().GAG_BRANCH = "dev"
 local branch = (getgenv and getgenv().GAG_BRANCH) or _G.GAG_BRANCH or "main"
-local ROOT = "https://raw.githubusercontent.com/catursec/tanduran/" .. branch .. "/kebongedang"
+local ROOT = "https://raw.githubusercontent.com/catursec/testing/tanduran/" .. branch .. "/kebongedang"
 
 -- PlaceId server Trade World.
 local TRADE_WORLD_PLACE = 129954712878723
